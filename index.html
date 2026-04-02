@@ -3,30 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>殺せんせーAI (Gemini 3 Flash)</title>
+    <title>殺せんせーAI (音声対応版)</title>
     <style>
         body { font-family: sans-serif; text-align: center; background: #fffde7; padding: 20px; margin: 0; }
-        #face { font-size: 100px; margin: 20px; transition: 0.3s; cursor: pointer; }
-        #chat-log { height: 400px; overflow-y: auto; border: 3px solid #fbc02d; padding: 20px; margin: 10px auto; background: white; max-width: 600px; border-radius: 20px; text-align: left; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
-        input { padding: 15px; width: 60%; border-radius: 30px; border: 2px solid #fbc02d; outline: none; }
+        #face { font-size: 100px; margin: 20px; transition: 0.3s; cursor: pointer; user-select: none; }
+        #chat-log { height: 400px; overflow-y: auto; border: 3px solid #fbc02d; padding: 20px; margin: 10px auto; background: white; max-width: 600px; border-radius: 20px; text-align: left; }
+        .input-area { margin-top: 20px; }
+        input { padding: 15px; width: 60%; border-radius: 30px; border: 2px solid #fbc02d; outline: none; font-size: 16px; }
         button { padding: 15px 30px; background: #fbc02d; border: none; border-radius: 30px; cursor: pointer; font-weight: bold; margin-left: 10px; }
         .koro { color: #d4a017; font-weight: bold; }
+        .setting-tip { font-size: 12px; color: #888; margin-top: 10px; }
     </style>
 </head>
 <body>
-    <div id="face">● ｖ ●</div>
-    <h1>椚ヶ丘中学校 3年E組</h1>
-    <div id="chat-log">ヌルフフフ、最新のGemini 3で私を動かそうというのですね？</div>
+    <div id="face" onclick="speak('ヌルフフフ！手入れですか？手入れなんですか！？')">● ｖ ●</div>
+    <h1>殺せんせーの教室</h1>
+    <div id="chat-log">先生、準備はいいですよ！</div>
     
     <div class="input-area">
-        <input type="text" id="user-input" placeholder="先生に質問しましょう">
+        <input type="text" id="user-input" placeholder="先生に話しかける...">
         <button id="send-btn">送信</button>
     </div>
+    <p class="setting-tip">※音量に注意してくださいね。顔を叩くとテスト再生します。</p>
 
     <script type="module">
         import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
 
         let apiKey = "";
+
+        // --- 読み上げ用関数 ---
+        function speak(text) {
+            // ブラウザに喋らせる準備
+            const uttr = new SpeechSynthesisUtterance();
+            uttr.text = text;
+            uttr.lang = "ja-JP"; // 日本語設定
+            uttr.rate = 1.2;     // 殺せんせーっぽく少し早口に（1.0が標準）
+            uttr.pitch = 1.1;    // 少し高めの声に
+
+            // 読み上げ実行
+            window.speechSynthesis.speak(uttr);
+        }
+        window.speak = speak; // HTML側から呼べるようにする
 
         async function main() {
             const inputField = document.getElementById('user-input');
@@ -35,7 +52,7 @@
             if (!userMsg) return;
 
             if (!apiKey) {
-                apiKey = prompt("Gemini 3を起動するためのAPIキーを入力してください");
+                apiKey = prompt("APIキーを入力してください");
                 if (!apiKey) return;
             }
 
@@ -44,25 +61,24 @@
 
             try {
                 const genAI = new GoogleGenerativeAI(apiKey);
-                
-                // 【最重要】ここをGemini 3の名前に！
-                const model = genAI.getGenerativeModel({ 
-                    model: "gemini-3-flash-preview"
-                });
+                const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
 
-                // 最新モデル向けにプロンプトを整理
                 const result = await model.generateContent({
                     contents: [{ role: "user", parts: [{ text: userMsg }] }],
-                    systemInstruction: "あなたは『暗殺教室』の殺せんせーです。語尾は『〜ですよ』『〜ですねぇ』。嬉しい時は『ヌルフフフ』と笑います。生徒を励まし、教育者として対話してください。"
+                    systemInstruction: "あなたは殺せんせーです。常に敬語、語尾は『〜ですよ』。笑い声は『ヌルフフフ』。"
                 });
 
                 const text = result.response.text();
+                
+                // ログに表示
                 log.innerHTML += `<p><span class="koro">殺せんせー:</span> ${text}</p>`;
                 log.scrollTop = log.scrollHeight;
+
+                // 【ここがポイント！】AIの返答を読み上げる
+                speak(text);
+
             } catch (err) {
-                console.error(err);
-                log.innerHTML += `<p style="color:red;">エラーです！モデル名が違うかもしれません。${err.message}</p>`;
-                apiKey = ""; // 再入力を促す
+                log.innerHTML += `<p style="color:red;">エラーです: ${err.message}</p>`;
             }
         }
 
