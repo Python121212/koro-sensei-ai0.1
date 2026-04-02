@@ -3,31 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>殺せんせーAI Web</title>
+    <title>殺せんせーAI (Gemini 3 Flash)</title>
     <style>
-        body { font-family: 'Hiragino Kaku Gothic ProN', sans-serif; text-align: center; background: #fffde7; margin: 0; padding: 20px; }
-        #face { font-size: 100px; margin: 20px 0; transition: 0.5s; cursor: pointer; }
-        #chat-log { height: 350px; overflow-y: auto; border: 3px solid #fbc02d; padding: 20px; margin: 10px auto; background: white; max-width: 600px; border-radius: 20px; text-align: left; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
-        .input-area { margin-top: 20px; }
-        input { padding: 15px; width: 60%; border-radius: 30px; border: 2px solid #fbc02d; outline: none; font-size: 16px; }
-        button { padding: 15px 30px; background: #fbc02d; border: none; border-radius: 30px; cursor: pointer; font-weight: bold; color: #5d4037; font-size: 16px; margin-left: 10px; transition: 0.2s; }
-        button:hover { background: #f9a825; transform: scale(1.05); }
-        .koro-name { color: #d4a017; font-weight: bold; }
-        .error { color: #d32f2f; font-weight: bold; background: #ffebee; padding: 10px; border-radius: 10px; }
+        body { font-family: sans-serif; text-align: center; background: #fffde7; padding: 20px; margin: 0; }
+        #face { font-size: 100px; margin: 20px; transition: 0.3s; cursor: pointer; }
+        #chat-log { height: 400px; overflow-y: auto; border: 3px solid #fbc02d; padding: 20px; margin: 10px auto; background: white; max-width: 600px; border-radius: 20px; text-align: left; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        input { padding: 15px; width: 60%; border-radius: 30px; border: 2px solid #fbc02d; outline: none; }
+        button { padding: 15px 30px; background: #fbc02d; border: none; border-radius: 30px; cursor: pointer; font-weight: bold; margin-left: 10px; }
+        .koro { color: #d4a017; font-weight: bold; }
     </style>
 </head>
 <body>
-    <div id="face" onclick="this.innerText='( ○ v ○ )'">● ｖ ●</div>
-    <h1>椚ヶ丘中学校 3年E組 教室</h1>
-    <div id="chat-log">ヌルフフフ、先生とお話ししましょう。</div>
+    <div id="face">● ｖ ●</div>
+    <h1>椚ヶ丘中学校 3年E組</h1>
+    <div id="chat-log">ヌルフフフ、最新のGemini 3で私を動かそうというのですね？</div>
     
     <div class="input-area">
-        <input type="text" id="user-input" placeholder="先生、質問があります！">
-        <button id="send-btn">送信する</button>
+        <input type="text" id="user-input" placeholder="先生に質問しましょう">
+        <button id="send-btn">送信</button>
     </div>
 
     <script type="module">
-        // 修正ポイント1: ライブラリを最新の安定版に固定
         import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
 
         let apiKey = "";
@@ -38,9 +34,8 @@
             const userMsg = inputField.value;
             if (!userMsg) return;
 
-            // APIキーの取得
             if (!apiKey) {
-                apiKey = prompt("殺せんせーを起動するためのAPIキーを入力してください。");
+                apiKey = prompt("Gemini 3を起動するためのAPIキーを入力してください");
                 if (!apiKey) return;
             }
 
@@ -50,22 +45,23 @@
             try {
                 const genAI = new GoogleGenerativeAI(apiKey);
                 
-                // 修正ポイント2: モデル名を確実に存在する「gemini-1.5-flash」に変更
+                // 【最重要】ここをGemini 3の名前に！
                 const model = genAI.getGenerativeModel({ 
-                    model: "gemini-1.5-flash",
-                    systemInstruction: "あなたは『暗殺教室』の殺せんせーです。常に敬語、語尾は『〜ですよ』『〜ですねぇ』。笑い声は『ヌルフフフ』。教育者として生徒を褒め、励まし、時にマッハ20の速度を自慢してください。"
+                    model: "gemini-3-flash-preview"
                 });
 
-                // 修正ポイント3: 生成処理をより安定した書き方に変更
-                const result = await model.generateContent(userMsg);
-                const response = await result.response;
-                const text = response.text();
+                // 最新モデル向けにプロンプトを整理
+                const result = await model.generateContent({
+                    contents: [{ role: "user", parts: [{ text: userMsg }] }],
+                    systemInstruction: "あなたは『暗殺教室』の殺せんせーです。語尾は『〜ですよ』『〜ですねぇ』。嬉しい時は『ヌルフフフ』と笑います。生徒を励まし、教育者として対話してください。"
+                });
 
-                log.innerHTML += `<p><span class="koro-name">殺せんせー:</span> ${text}</p>`;
+                const text = result.response.text();
+                log.innerHTML += `<p><span class="koro">殺せんせー:</span> ${text}</p>`;
                 log.scrollTop = log.scrollHeight;
             } catch (err) {
                 console.error(err);
-                log.innerHTML += `<p class="error">ヌルフフフ、通信エラーですよ！<br>理由: ${err.message}</p>`;
+                log.innerHTML += `<p style="color:red;">エラーです！モデル名が違うかもしれません。${err.message}</p>`;
                 apiKey = ""; // 再入力を促す
             }
         }
