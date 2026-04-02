@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>殺せんせーAI Web</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; background: #fffde7; }
+        #face { font-size: 100px; margin-top: 20px; transition: 0.5s; }
+        #chat-log { height: 300px; overflow-y: scroll; border: 1px solid #ccc; padding: 10px; margin: 20px; background: white; }
+    </style>
+</head>
+<body>
+    <div id="face">● v ●</div>
+    <h1>殺せんせーAI</h1>
+    <div id="chat-log">ここに会話が表示されます</div>
+    <input type="text" id="user-input" placeholder="先生に質問しましょう">
+    <button onclick="askKoroSensei()">質問する</button>
+
+    <script type="module">
+        import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
+
+        // ここにコピーしたAPIキーを貼り付けます
+        const API_KEY = "AIzaSyAlYVseShUwWdwhHj0SmJvYSnUH57iYrxo";
+        const genAI = new GoogleGenerativeAI(API_KEY);
+
+        async function askKoroSensei() {
+            const input = document.getElementById('user-input').value;
+            const log = document.getElementById('chat-log');
+            
+            // モデル（Gemini 1.5 Flash）の取得
+            const model = genAI.getGenerativeModel({ 
+                model: "gemini-1.5-flash",
+                systemInstruction: "あなたは暗殺教室の殺せんせーです。語尾は『〜ですよ』で、生徒を励ましてください。返答の先頭に必ず[YELLOW] [ORANGE] [PURPLE]のいずれかの感情タグを付けてください。"
+            });
+
+            const result = await model.generateContent(input);
+            const response = await result.response;
+            const text = response.text();
+
+            // 感情に合わせて色を変える（簡易版）
+            if(text.includes("[ORANGE]")) document.body.style.background = "#ffe0b2";
+            if(text.includes("[PURPLE]")) document.body.style.background = "#e1bee7";
+            
+            log.innerHTML += `<p><b>あなた:</b> ${input}</p>`;
+            log.innerHTML += `<p><b>殺せんせー:</b> ${text.replace(/\[.*?\]/g, '')}</p>`;
+        }
+        window.askKoroSensei = askKoroSensei;
+    </script>
+</body>
+</html>
