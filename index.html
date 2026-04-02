@@ -2,49 +2,68 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>殺せんせーAI Web</title>
     <style>
-        body { font-family: sans-serif; text-align: center; background: #fffde7; }
-        #face { font-size: 100px; margin-top: 20px; transition: 0.5s; }
-        #chat-log { height: 300px; overflow-y: scroll; border: 1px solid #ccc; padding: 10px; margin: 20px; background: white; }
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; text-align: center; background: #fffde7; color: #333; margin: 0; padding: 20px; }
+        #face { font-size: 80px; margin: 20px 0; transition: all 0.3s; cursor: pointer; }
+        #chat-log { height: 300px; overflow-y: auto; border: 2px solid #fbc02d; padding: 15px; margin: 20px auto; background: white; max-width: 500px; border-radius: 10px; text-align: left; }
+        input { padding: 10px; width: 70%; max-width: 300px; border-radius: 5px; border: 1px solid #ccc; }
+        button { padding: 10px 20px; background: #fbc02d; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .koro { color: #fbc02d; font-weight: bold; }
     </style>
 </head>
 <body>
-    <div id="face">● v ●</div>
+    <div id="face" onclick="alert('ヌルフフフ、手入れですか？')">● ｖ ●</div>
     <h1>殺せんせーAI</h1>
-    <div id="chat-log">ここに会話が表示されます</div>
-    <input type="text" id="user-input" placeholder="先生に質問しましょう">
-    <button onclick="askKoroSensei()">質問する</button>
+    <div id="chat-log">先生に挨拶してみましょう。</div>
+    <input type="text" id="user-input" placeholder="メッセージを入力...">
+    <button id="send-btn">送信</button>
 
     <script type="module">
+        // 最新の読み込み方法に変更
         import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
 
-        // ここにコピーしたAPIキーを貼り付けます
-        const API_KEY = "AIzaSyAlYVseShUwWdwhHj0SmJvYSnUH57iYrxo";
-        const genAI = new GoogleGenerativeAI(API_KEY);
-
+        // セキュリティのため、開いた時にキーを入力させる方式にします
+        let API_KEY = "";
+        
         async function askKoroSensei() {
-            const input = document.getElementById('user-input').value;
+            if (!API_KEY) {
+                API_KEY = prompt("APIキーを入力してください（一度入力すればOKです）");
+                if (!API_KEY) return;
+            }
+
+            const inputField = document.getElementById('user-input');
             const log = document.getElementById('chat-log');
-            
-            // モデル（Gemini 1.5 Flash）の取得
-            const model = genAI.getGenerativeModel({ 
-                model: "gemini-1.5-flash",
-                systemInstruction: "あなたは暗殺教室の殺せんせーです。語尾は『〜ですよ』で、生徒を励ましてください。返答の先頭に必ず[YELLOW] [ORANGE] [PURPLE]のいずれかの感情タグを付けてください。"
-            });
+            const input = inputField.value;
+            if (!input) return;
 
-            const result = await model.generateContent(input);
-            const response = await result.response;
-            const text = response.text();
-
-            // 感情に合わせて色を変える（簡易版）
-            if(text.includes("[ORANGE]")) document.body.style.background = "#ffe0b2";
-            if(text.includes("[PURPLE]")) document.body.style.background = "#e1bee7";
-            
             log.innerHTML += `<p><b>あなた:</b> ${input}</p>`;
-            log.innerHTML += `<p><b>殺せんせー:</b> ${text.replace(/\[.*?\]/g, '')}</p>`;
+            inputField.value = "";
+
+            try {
+                const genAI = new GoogleGenerativeAI(API_KEY);
+                const model = genAI.getGenerativeModel({ 
+                    model: "gemini-1.5-flash",
+                    systemInstruction: "あなたは『暗殺教室』の殺せんせーです。語尾は『〜ですよ』『〜ですねぇ』で、常に丁寧な敬語。嬉しい時は『ヌルフフフ』と笑います。生徒を励ます教育者として振る舞ってください。"
+                });
+
+                const result = await model.generateContent(input);
+                const response = await result.response;
+                const text = response.text();
+
+                log.innerHTML += `<p><span class="koro">殺せんせー:</span> ${text}</p>`;
+                log.scrollTop = log.scrollHeight; // 自動スクロール
+            } catch (error) {
+                log.innerHTML += `<p style="color:red;">エラーですよ！キーが間違っているかもしれません：${error.message}</p>`;
+                API_KEY = ""; // エラー時はキーをリセットして再入力させる
+            }
         }
-        window.askKoroSensei = askKoroSensei;
+
+        document.getElementById('send-btn').addEventListener('click', askKoroSensei);
+        document.getElementById('user-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') askKoroSensei();
+        });
     </script>
 </body>
 </html>
