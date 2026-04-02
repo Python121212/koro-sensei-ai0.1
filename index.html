@@ -5,65 +5,65 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>殺せんせーAI Web</title>
     <style>
-        body { font-family: 'Helvetica Neue', Arial, sans-serif; text-align: center; background: #fffde7; color: #333; margin: 0; padding: 20px; }
-        #face { font-size: 80px; margin: 20px 0; transition: all 0.3s; cursor: pointer; }
-        #chat-log { height: 300px; overflow-y: auto; border: 2px solid #fbc02d; padding: 15px; margin: 20px auto; background: white; max-width: 500px; border-radius: 10px; text-align: left; }
-        input { padding: 10px; width: 70%; max-width: 300px; border-radius: 5px; border: 1px solid #ccc; }
-        button { padding: 10px 20px; background: #fbc02d; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        .koro { color: #fbc02d; font-weight: bold; }
+        body { font-family: sans-serif; text-align: center; background: #fffde7; margin: 0; padding: 20px; }
+        #face { font-size: 80px; margin: 20px; transition: 0.3s; }
+        #chat-log { height: 350px; overflow-y: auto; border: 2px solid #fbc02d; padding: 15px; margin: 10px auto; background: white; max-width: 500px; border-radius: 15px; text-align: left; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .input-area { margin-top: 20px; }
+        input { padding: 12px; width: 60%; border-radius: 25px; border: 1px solid #ccc; outline: none; }
+        button { padding: 12px 25px; background: #fbc02d; border: none; border-radius: 25px; cursor: pointer; font-weight: bold; }
+        .koro-text { color: #d4a017; font-weight: bold; }
     </style>
 </head>
 <body>
-    <div id="face" onclick="alert('ヌルフフフ、手入れですか？')">● ｖ ●</div>
-    <h1>殺せんせーAI</h1>
-    <div id="chat-log">先生に挨拶してみましょう。</div>
-    <input type="text" id="user-input" placeholder="メッセージを入力...">
-    <button id="send-btn">送信</button>
+    <div id="face">● ｖ ●</div>
+    <h1>椚ヶ丘中学校 3年E組</h1>
+    <div id="chat-log">ヌルフフフ、準備はいいですか？</div>
+    
+    <div class="input-area">
+        <input type="text" id="user-input" placeholder="先生に何か言ってみなさい">
+        <button id="send-btn">送信</button>
+    </div>
 
     <script type="module">
-        // 最新の読み込み方法に変更
         import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
 
-        // セキュリティのため、開いた時にキーを入力させる方式にします
-        let API_KEY = "";
-        
-        async function askKoroSensei() {
-            if (!API_KEY) {
-                API_KEY = prompt("APIキーを入力してください（一度入力すればOKです）");
-                if (!API_KEY) return;
-            }
+        let apiKey = "";
 
+        async function main() {
             const inputField = document.getElementById('user-input');
             const log = document.getElementById('chat-log');
-            const input = inputField.value;
-            if (!input) return;
+            const userMsg = inputField.value;
+            if (!userMsg) return;
 
-            log.innerHTML += `<p><b>あなた:</b> ${input}</p>`;
+            if (!apiKey) {
+                apiKey = prompt("APIキーを入力してください");
+                if (!apiKey) return;
+            }
+
+            log.innerHTML += `<p><b>君:</b> ${userMsg}</p>`;
             inputField.value = "";
 
             try {
-                const genAI = new GoogleGenerativeAI(API_KEY);
+                const genAI = new GoogleGenerativeAI(apiKey);
+                // モデル名を最新の安定版「gemini-1.5-flash-latest」に変更
                 const model = genAI.getGenerativeModel({ 
-                    model: "gemini-1.5-flash",
-                    systemInstruction: "あなたは『暗殺教室』の殺せんせーです。語尾は『〜ですよ』『〜ですねぇ』で、常に丁寧な敬語。嬉しい時は『ヌルフフフ』と笑います。生徒を励ます教育者として振る舞ってください。"
+                    model: "gemini-1.5-flash-latest",
+                    systemInstruction: "あなたは『暗殺教室』の殺せんせーです。常に敬語、語尾は『〜ですよ』『〜ですねぇ』。笑い声は『ヌルフフフ』。教育者として生徒を励ましてください。"
                 });
 
-                const result = await model.generateContent(input);
-                const response = await result.response;
-                const text = response.text();
+                const result = await model.generateContent(userMsg);
+                const text = result.response.text();
 
-                log.innerHTML += `<p><span class="koro">殺せんせー:</span> ${text}</p>`;
-                log.scrollTop = log.scrollHeight; // 自動スクロール
-            } catch (error) {
-                log.innerHTML += `<p style="color:red;">エラーですよ！キーが間違っているかもしれません：${error.message}</p>`;
-                API_KEY = ""; // エラー時はキーをリセットして再入力させる
+                log.innerHTML += `<p class="koro-text">殺せんせー: ${text}</p>`;
+                log.scrollTop = log.scrollHeight;
+            } catch (err) {
+                log.innerHTML += `<p style="color:red;">エラーです: ${err.message}</p>`;
+                apiKey = ""; // エラー時は再入力を促す
             }
         }
 
-        document.getElementById('send-btn').addEventListener('click', askKoroSensei);
-        document.getElementById('user-input').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') askKoroSensei();
-        });
+        document.getElementById('send-btn').addEventListener('click', main);
+        document.getElementById('user-input').addEventListener('keypress', (e) => { if(e.key==='Enter') main(); });
     </script>
 </body>
 </html>
